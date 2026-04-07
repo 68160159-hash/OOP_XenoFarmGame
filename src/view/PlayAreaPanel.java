@@ -80,16 +80,17 @@ public class PlayAreaPanel extends JPanel {
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
+        // 1. วาดพื้นหลัง
         if (bgImage != null) g2.drawImage(bgImage, 0, 0, 1000, 750, null);
 
+        // 2. วาดหลุมศพ
         for (Point p : graves) {
             if (tombstoneImg != null) g2.drawImage(tombstoneImg, p.x, p.y, 60, 60, null);
         }
 
-        // วาดนักบิน + ชื่อผู้เล่น
-        drawAstro(g2);
+        // --- ย้ายการวาดนักบินไปไว้หลังสัตว์เลี้ยง เพื่อแก้ปัญหาการเดินทับ ---
 
-        // วาดสัตว์เลี้ยง (Z-Order)
+        // 3. วาดสัตว์เลี้ยง (Z-Order)
         ArrayList<Alien> sortedPets = new ArrayList<>(game.getMyPets());
         Collections.sort(sortedPets, Comparator.comparingInt(Alien::getY));
 
@@ -103,12 +104,16 @@ public class PlayAreaPanel extends JPanel {
             drawPetHUD(g2, pet, size);
         }
 
-        // วาดอาหาร
+        // 4. วาดนักบิน + ชื่อผู้เล่น (ย้ายมาวาดตรงนี้เพื่อให้อยู่เลเยอร์บนสุด) ✅
+        drawAstro(g2);
+
+        // 5. วาดอาหาร
         if (feedingType != -1 && feedingLocation != null) {
             BufferedImage food = (feedingType == 0) ? solarFoodImg : dewFoodImg;
             if (food != null) g2.drawImage(food, feedingLocation.x + 40, feedingLocation.y - 30, 50, 50, null);
         }
 
+        // 6. วาด UI ส่วนบน
         renderUI(g2);
     }
 
@@ -131,8 +136,7 @@ public class PlayAreaPanel extends JPanel {
             FontMetrics fm = g2.getFontMetrics();
             int nameWidth = fm.stringWidth(name);
 
-            // 3. ปรับตำแหน่งให้ขยับลงมาใกล้หัวมากขึ้น 🌟
-            // เปลี่ยนจาก -25 เป็น -10 (ยิ่งลบน้อย ยิ่งใกล้หัว)
+            // 3. ปรับตำแหน่งให้ขยับลงมาใกล้หัวมากขึ้น
             int nx = astroX + (astroWidth / 2) - (nameWidth / 2);
             int ny = floatingY - 10;
 
@@ -144,11 +148,9 @@ public class PlayAreaPanel extends JPanel {
             int rectWidth = nameWidth + (paddingX * 2);
             int rectHeight = fm.getHeight() + (paddingY * 2);
 
-            // วาดพื้นหลังขาวโปร่งใส
             g2.setColor(new Color(255, 255, 255, 160));
             g2.fillRoundRect(rectX, rectY, rectWidth, rectHeight, 12, 12);
 
-            // วาดเส้นขอบขาว
             g2.setColor(new Color(255, 255, 255, 220));
             g2.drawRoundRect(rectX, rectY, rectWidth, rectHeight, 12, 12);
 
@@ -157,6 +159,7 @@ public class PlayAreaPanel extends JPanel {
             g2.drawString(name, nx, ny);
         }
     }
+
     private void drawPetHUD(Graphics2D g2, Alien pet, int size) {
         int x = pet.getX() + 10, y = pet.getY() - 20;
         g2.setFont(game.getPixelFont().deriveFont(Font.BOLD, 16f));
@@ -209,7 +212,7 @@ public class PlayAreaPanel extends JPanel {
         Iterator<Alien> it = game.getMyPets().iterator();
         while (it.hasNext()) {
             Alien p = it.next();
-            p.addDay(); // เรียกใช้เมธอดที่เราเพิ่มใน Alien.java
+            p.addDay();
             p.decreaseHunger(20);
             if (random.nextInt(100) < 8) {
                 graves.add(new Point(p.getX(), p.getY())); it.remove();
